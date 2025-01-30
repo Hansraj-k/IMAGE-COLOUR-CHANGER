@@ -6,8 +6,8 @@
     <title>Remove Specific Color from Image</title>
     <style>
         #canvas {
-            max-width: 500px; /* Set max size for canvas */
-            max-height: 500px; /* Set max size for canvas */
+            max-width: 100%; /* Set max size for canvas */
+            max-height: 500.1px; /* Set max size for canvas */
             border: 1px solid black;
             cursor: crosshair; /* Cursor for selecting color */
         }
@@ -43,9 +43,7 @@
     <div id="imageDimensions">Dimensions: Not uploaded yet</div>
     <button onclick="removeColor()">Remove Color</button>
     <button onclick="downloadImage()">Download Image</button>
-    <button onclick="resetCanvas()">Reset</button>
     <canvas id="canvas"></canvas>
-
     <script>
         const upload = document.getElementById('upload');
         const canvas = document.getElementById('canvas');
@@ -61,7 +59,6 @@
         let originalImgData;
         let originalImageSrc;
         let originalImageName = "image"; // Default name for the image
-        let currentImageData;
 
         upload.addEventListener('change', (event) => {
             const file = event.target.files[0];
@@ -97,9 +94,6 @@
             canvas.width = widthAdjusted;
             canvas.height = heightAdjusted;
             ctx.drawImage(img, 0, 0, widthAdjusted, heightAdjusted);
-
-            // Store the current image data after loading
-            currentImageData = originalImgData; // Set the initial image data
         };
 
         function getImageDataForOriginal(image) {
@@ -117,17 +111,11 @@
             const data = imageData.data;
 
             for (let i = 0; i < data.length; i += 4) {
-                // Only remove if it's an exact match
-                if (isExactMatch(data[i], data[i + 1], data[i + 2], targetColor)) {
+                if (isMatchingColor(data[i], data[i+1], data[i+2], targetColor)) {
                     data[i + 3] = 0; // Set alpha to 0 (transparent)
                 }
             }
             ctx.putImageData(imageData, 0, 0);
-            currentImageData = imageData; // Update current image data after removal
-        }
-
-        function isExactMatch(r, g, b, targetColor) {
-            return r === targetColor.r && g === targetColor.g && b === targetColor.b;
         }
 
         function hexToRgb(hex) {
@@ -143,9 +131,31 @@
             return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
         }
 
+        function isMatchingColor(r, g, b, targetColor, tolerance = 50) {
+            return Math.abs(r - targetColor.r) < tolerance &&
+                   Math.abs(g - targetColor.g) < tolerance &&
+                   Math.abs(b - targetColor.b) < tolerance;
+        }
+
         function downloadImage() {
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = img.width;
+            tempCanvas.height = img.height;
+            tempCtx.putImageData(originalImgData, 0, 0);
+            const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            const data = imageData.data;
+
+            const targetColor = hexToRgb(selectedColor);
+            for (let i = 0; i < data.length; i += 4) {
+                if (isMatchingColor(data[i], data[i + 1], data[i + 2], targetColor)) {
+                    data[i + 3] = 0;
+                }
+            }
+            tempCtx.putImageData(imageData, 0, 0);
+
             const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
+            link.href = tempCanvas.toDataURL('image/png');
             link.download = `${originalImageName}_FYNRESH.png`; // Append "_FYNRESH" to the original name
             link.click();
         }
@@ -194,14 +204,6 @@
             const rgb = hexToRgb(hex);
             return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
         }
-
-        function resetCanvas() {
-            // Redraw the original image to the canvas without clearing
-            ctx.putImageData(originalImgData, 0, 0);
-            currentImageData = originalImgData; // Reset the current image data to the original
-        }
     </script>
 </body>
 </html>
-
-
