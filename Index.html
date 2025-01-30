@@ -6,15 +6,15 @@
     <title>Remove Specific Color from Image</title>
     <style>
         #canvas {
-            max-width: 100%; /* Set max size for canvas */
-            max-height: 500.1px; /* Set max size for canvas */
+            max-width: 100%;
+            max-height: 500.1px;
             border: 1px solid black;
-            cursor: crosshair; /* Cursor for selecting color */
+            cursor: crosshair;
         }
         #selectedColor {
             width: 50px;
             height: 50px;
-            border-radius: 50%; /* Make the div a circle */
+            border-radius: 50%;
             border: 1px solid #000;
             display: inline-block;
             margin: 10px 0;
@@ -26,11 +26,16 @@
             margin: 10px 0;
             font-size: 14px;
         }
+        /* Hide the color input if EyeDropper is supported */
+        #fallbackColorPicker {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <input type="file" id="upload" accept="image/*">
     <button id="eyeDropperBtn">🖤 Pick Color</button>
+    <input type="color" id="fallbackColorPicker" title="Pick Color" />
     <div class="color-inputs">
         <label for="hexInput">Hex Code:</label>
         <input type="text" id="hexInput" value="#ffffff">
@@ -44,11 +49,13 @@
     <button onclick="removeColor()">Remove Color</button>
     <button onclick="downloadImage()">Download Image</button>
     <canvas id="canvas"></canvas>
+    
     <script>
         const upload = document.getElementById('upload');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const eyeDropperBtn = document.getElementById('eyeDropperBtn');
+        const fallbackColorPicker = document.getElementById('fallbackColorPicker');
         const hexInput = document.getElementById('hexInput');
         const rgbInput = document.getElementById('rgbInput');
         const selectedColorDiv = document.getElementById('selectedColor');
@@ -170,8 +177,14 @@
                     alert('Color picking failed: ' + e);
                 });
             } else {
-                alert('Your browser does not support the EyeDropper API.');
+                // Fall back to color picker input for unsupported browsers (mobile)
+                fallbackColorPicker.click();
             }
+        });
+
+        fallbackColorPicker.addEventListener('input', () => {
+            selectedColor = fallbackColorPicker.value;
+            updateColorFields(selectedColor);
         });
 
         hexInput.addEventListener('input', () => {
