@@ -26,16 +26,11 @@
             margin: 10px 0;
             font-size: 14px;
         }
-        /* Hide the color input if EyeDropper is supported */
-        #fallbackColorPicker {
-            display: none;
-        }
     </style>
 </head>
 <body>
     <input type="file" id="upload" accept="image/*">
     <button id="eyeDropperBtn">🖤 Pick Color</button>
-    <input type="color" id="fallbackColorPicker" title="Pick Color" />
     <div class="color-inputs">
         <label for="hexInput">Hex Code:</label>
         <input type="text" id="hexInput" value="#ffffff">
@@ -54,8 +49,6 @@
         const upload = document.getElementById('upload');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const eyeDropperBtn = document.getElementById('eyeDropperBtn');
-        const fallbackColorPicker = document.getElementById('fallbackColorPicker');
         const hexInput = document.getElementById('hexInput');
         const rgbInput = document.getElementById('rgbInput');
         const selectedColorDiv = document.getElementById('selectedColor');
@@ -112,6 +105,16 @@
             return tempCtx.getImageData(0, 0, image.width, image.height);
         }
 
+        // Extract color from canvas on mouse click
+        canvas.addEventListener('click', (event) => {
+            const x = event.offsetX;
+            const y = event.offsetY;
+            const imageData = ctx.getImageData(x, y, 1, 1);
+            const pixel = imageData.data;
+            selectedColor = rgbToHex(pixel[0], pixel[1], pixel[2]);
+            updateColorFields(selectedColor);
+        });
+
         function removeColor() {
             const targetColor = hexToRgb(selectedColor);
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -167,26 +170,6 @@
             link.click();
         }
 
-        eyeDropperBtn.addEventListener('click', () => {
-            if ('EyeDropper' in window) {
-                const eyeDropper = new EyeDropper();
-                eyeDropper.open().then(result => {
-                    selectedColor = result.sRGBHex; // Set the selected color from eye dropper
-                    updateColorFields(selectedColor);
-                }).catch(e => {
-                    alert('Color picking failed: ' + e);
-                });
-            } else {
-                // Fall back to color picker input for unsupported browsers (mobile)
-                fallbackColorPicker.click();
-            }
-        });
-
-        fallbackColorPicker.addEventListener('input', () => {
-            selectedColor = fallbackColorPicker.value;
-            updateColorFields(selectedColor);
-        });
-
         hexInput.addEventListener('input', () => {
             const hexValue = hexInput.value.trim();
             if (/^#[0-9A-Fa-f]{6}$/.test(hexValue)) {
@@ -220,3 +203,4 @@
     </script>
 </body>
 </html>
+
