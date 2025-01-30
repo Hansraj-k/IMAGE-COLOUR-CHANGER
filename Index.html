@@ -50,16 +50,11 @@
             from { opacity: 0; }
             to { opacity: 1; }
         }
-        .color-picker-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
         .color-box {
             width: 30px;
             height: 30px;
             border: 1px solid #000;
+            display: inline-block;
         }
     </style>
 </head>
@@ -67,9 +62,8 @@
     <div class="container fade-in">
         <h2>Remove Specific Color from Image</h2>
         <input type="file" id="upload" accept="image/*">
-        <div class="color-picker-container">
-            <input type="color" id="colorPicker" value="#ffffff" onchange="updateHexInput()">
-            <input type="text" id="hexCode" placeholder="#FFFFFF" onchange="updateColorPicker()">
+        <div>
+            <input type="text" id="hexCode" placeholder="#FFFFFF" readonly>
             <input type="text" id="rgbCode" placeholder="RGB(255,255,255)" readonly>
             <div class="color-box" id="selectedColor"></div>
         </div>
@@ -103,8 +97,8 @@
         };
 
         function removeColor() {
-            const hexCodeInput = document.getElementById('hexCode');
-            const targetColor = hexToRgb(hexCodeInput.value);
+            const hexCodeInput = document.getElementById('hexCode').value;
+            const targetColor = hexToRgb(hexCodeInput);
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
             
@@ -138,28 +132,12 @@
             link.click();
         }
 
-        function updateHexInput() {
-            const colorPicker = document.getElementById('colorPicker');
-            const hexValue = colorPicker.value.toUpperCase();
-            document.getElementById('hexCode').value = hexValue;
-            document.getElementById('rgbCode').value = `RGB(${hexToRgb(hexValue).r}, ${hexToRgb(hexValue).g}, ${hexToRgb(hexValue).b})`;
-            document.getElementById('selectedColor').style.backgroundColor = hexValue;
-        }
-
-        function updateColorPicker() {
-            const hexCodeInput = document.getElementById('hexCode');
-            document.getElementById('colorPicker').value = hexCodeInput.value;
-            document.getElementById('rgbCode').value = `RGB(${hexToRgb(hexCodeInput.value).r}, ${hexToRgb(hexCodeInput.value).g}, ${hexToRgb(hexCodeInput.value).b})`;
-            document.getElementById('selectedColor').style.backgroundColor = hexCodeInput.value;
-        }
-
         canvas.addEventListener('click', (event) => {
             const rect = canvas.getBoundingClientRect();
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
             const pixel = ctx.getImageData(x, y, 1, 1).data;
             const hexColor = `#${pixel[0].toString(16).padStart(2, '0')}${pixel[1].toString(16).padStart(2, '0')}${pixel[2].toString(16).padStart(2, '0')}`.toUpperCase();
-            document.getElementById('colorPicker').value = hexColor;
             document.getElementById('hexCode').value = hexColor;
             document.getElementById('rgbCode').value = `RGB(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`;
             document.getElementById('selectedColor').style.backgroundColor = hexColor;
@@ -167,6 +145,3 @@
     </script>
 </body>
 </html>
-
-
-
