@@ -1,132 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FYNRESH - Remove or Change Image Color</title>
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #121212;
-            color: #fff;
-            padding: 20px;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: #1e1e1e;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(255, 218, 24, 0.2);
-        }
-        canvas {
-            max-width: 100%;
-            max-height: 400px;
-            display: block;
-            margin: 10px auto;
-            border: 2px solid #ffda18;
-            border-radius: 10px;
-            cursor: crosshair;
-        }
-        button, input {
-            margin: 10px;
-            padding: 12px;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        button {
-            background-color: #ff782b;
-            color: white;
-            transition: background 0.3s ease;
-        }
-        button:hover {
-            background-color: #f94601;
-        }
-        .color-box {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid #ffda18;
-            display: inline-block;
-            margin: 10px;
-        }
-        .color-preview {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid #ffda18;
-            display: none;
-            pointer-events: none;
-            transform: translate(-50%, -50%);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remove Color from Image</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      text-align: center;
+      background-color: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    canvas {
+      margin-top: 20px;
+      max-width: 100%;
+      border: 1px solid #ddd;
+    }
+
+    input[type="file"] {
+      margin: 20px 0;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>FYNRESH - Remove or Change Specific Color from Image</h2>
-        <input type="file" id="upload" accept="image/*">
-        <div>
-            <input type="text" id="hexCode" placeholder="#FFFFFF" readonly>
-            <input type="text" id="rgbCode" placeholder="RGB(255,255,255)" readonly>
-            <div class="color-box" id="selectedColor"></div>
-            <i class="fa-solid fa-eye-dropper"></i>
-        </div>
-        <input type="color" id="newColor" value="#ffffff">
-        <button onclick="changeColor()">Change Color</button>
-        <button onclick="removeColor()">Remove Color</button>
-        <button onclick="downloadImage()">Download Image</button>
-        <canvas id="canvas"></canvas>
-        <div id="colorPreview" class="color-preview"></div>
-    </div>
-    <script>
-        const upload = document.getElementById('upload');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const colorPreview = document.getElementById('colorPreview');
-        let img = new Image();
-        let originalImage = null;
 
-        upload.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+<div class="container">
+  <h1>Remove Color from Image 🌈</h1>
+  <input type="file" id="uploadImage" accept="image/*">
+  <canvas id="canvas"></canvas>
+  <button id="removeColorBtn">Remove Color 🎨</button>
+</div>
 
-        img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-            originalImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        };
+<script>
+  document.getElementById('uploadImage').addEventListener('change', handleImageUpload);
+  document.getElementById('removeColorBtn').addEventListener('click', removeColor);
 
-        canvas.addEventListener('mousemove', (event) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            const pixel = ctx.getImageData(x, y, 1, 1).data;
-            const hexColor = `#${pixel[0].toString(16).padStart(2, '0')}${pixel[1].toString(16).padStart(2, '0')}${pixel[2].toString(16).padStart(2, '0')}`.toUpperCase();
-            colorPreview.style.backgroundColor = hexColor;
-            colorPreview.style.left = `${event.clientX}px`;
-            colorPreview.style.top = `${event.clientY}px`;
-            colorPreview.style.display = 'block';
-        });
+  let img = new Image();
+  let canvas = document.getElementById('canvas');
+  let ctx = canvas.getContext('2d');
+  let imageData;
 
-        canvas.addEventListener('mouseleave', () => {
-            colorPreview.style.display = 'none';
-        });
-    </script>
+  function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  img.onload = function() {
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+    imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  };
+
+  function removeColor() {
+    // The color to remove (in RGB format)
+    const targetColor = { r: 255, g: 0, b: 0 }; // Example: Red
+
+    for (let i = 0; i < imageData.data.length; i += 4) {
+      let r = imageData.data[i];
+      let g = imageData.data[i + 1];
+      let b = imageData.data[i + 2];
+
+      // Check if the pixel is close to the target color
+      if (isColorMatch(r, g, b, targetColor)) {
+        imageData.data[i + 3] = 0; // Make the pixel transparent (remove it)
+      }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+  }
+
+  function isColorMatch(r, g, b, target) {
+    // Allow a tolerance for color matching (to account for slight variations)
+    const tolerance = 30;
+    return (
+      Math.abs(r - target.r) < tolerance &&
+      Math.abs(g - target.g) < tolerance &&
+      Math.abs(b - target.b) < tolerance
+    );
+  }
+</script>
+
 </body>
 </html>
-
-
-
