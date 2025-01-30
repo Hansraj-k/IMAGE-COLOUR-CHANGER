@@ -229,10 +229,9 @@
             ctx.putImageData(imageData, 0, 0);
         }
 
-        function isMatchingColor(r, g, b, targetColor, tolerance = 50) {
-            return Math.abs(r - targetColor.r) < tolerance &&
-                   Math.abs(g - targetColor.g) < tolerance &&
-                   Math.abs(b - targetColor.b) < tolerance;
+        // Fix to only remove exact color
+        function isMatchingColor(r, g, b, targetColor) {
+            return r === targetColor.r && g === targetColor.g && b === targetColor.b;
         }
 
         function downloadImage() {
@@ -300,4 +299,5 @@
     </script>
 </body>
 </html>
+
 
