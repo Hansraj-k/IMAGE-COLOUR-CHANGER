@@ -44,6 +44,14 @@
             margin-top: 5px;
             color: #888;
         }
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin: 5px;
+            cursor: pointer;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
@@ -53,6 +61,7 @@
         <span class="eyeDropper-message">Works on Desktop/Laptop only</span>
     </div>
     <input type="color" id="fallbackColorPicker" title="Pick Color (Mobile)">
+    <div id="colorPaletteContainer"></div>
     <div class="color-inputs">
         <label for="hexInput">Hex Code:</label>
         <input type="text" id="hexInput" value="#ffffff">
@@ -67,7 +76,7 @@
     <button onclick="downloadImage()">Download Image</button>
     <canvas id="canvas"></canvas>
     <div id="meaning">Select a color from the image or use the color picker to remove it from the image.</div>
-    
+
     <script>
         const upload = document.getElementById('upload');
         const canvas = document.getElementById('canvas');
@@ -79,12 +88,14 @@
         const selectedColorDiv = document.getElementById('selectedColor');
         const imageDimensions = document.getElementById('imageDimensions');
         const meaningText = document.getElementById('meaning');
+        const colorPaletteContainer = document.getElementById('colorPaletteContainer');
         
         let img = new Image();
         let selectedColor = '#ffffff';
         let originalImgData;
         let originalImageSrc;
         let originalImageName = "image"; // Default name for the image
+        let uniqueColors = new Set();  // Set to store unique colors from the image
 
         upload.addEventListener('change', (event) => {
             const file = event.target.files[0];
@@ -120,6 +131,9 @@
             canvas.width = widthAdjusted;
             canvas.height = heightAdjusted;
             ctx.drawImage(img, 0, 0, widthAdjusted, heightAdjusted);
+
+            // Detect all unique colors in the image
+            detectUniqueColors();
         };
 
         function getImageDataForOriginal(image) {
@@ -131,16 +145,37 @@
             return tempCtx.getImageData(0, 0, image.width, image.height);
         }
 
-        // Add click/touch event on canvas to pick color
-        canvas.addEventListener('click', (event) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            const imageData = ctx.getImageData(x, y, 1, 1);
-            const pixel = imageData.data;
-            selectedColor = rgbToHex(pixel[0], pixel[1], pixel[2]);
-            updateColorFields(selectedColor);
-        });
+        function detectUniqueColors() {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            // Loop through each pixel and store unique colors in a Set
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                const rgbColor = rgbToHex(r, g, b);
+                uniqueColors.add(rgbColor);
+            }
+
+            // Create color swatches for the unique colors
+            displayColorSwatches();
+        }
+
+        function displayColorSwatches() {
+            colorPaletteContainer.innerHTML = '';  // Clear previous swatches
+
+            uniqueColors.forEach(color => {
+                const colorSwatch = document.createElement('div');
+                colorSwatch.classList.add('color-swatch');
+                colorSwatch.style.backgroundColor = color;
+                colorSwatch.addEventListener('click', () => {
+                    selectedColor = color;
+                    updateColorFields(selectedColor);
+                });
+                colorPaletteContainer.appendChild(colorSwatch);
+            });
+        }
 
         // Convert RGB to Hex
         function rgbToHex(r, g, b) {
@@ -175,7 +210,7 @@
             const data = imageData.data;
 
             for (let i = 0; i < data.length; i += 4) {
-                if (isMatchingColor(data[i], data[i+1], data[i+2], targetColor)) {
+                if (isMatchingColor(data[i], data[i + 1], data[i + 2], targetColor)) {
                     data[i + 3] = 0; // Set alpha to 0 (transparent)
                 }
             }
@@ -250,7 +285,7 @@
                 updateColorFields(selectedColor);
             }
         });
-
     </script>
 </body>
 </html>
+
