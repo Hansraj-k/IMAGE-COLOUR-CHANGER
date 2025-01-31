@@ -246,27 +246,27 @@
 
 
         function downloadImage() {
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCanvas.width = img.width;
-            tempCanvas.height = img.height;
-            tempCtx.putImageData(originalImgData, 0, 0);
-            const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-            const data = imageData.data;
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCanvas.width = img.width;
+    tempCanvas.height = img.height;
+    tempCtx.putImageData(originalImgData, 0, 0);
+    const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+    const data = imageData.data;
 
-            const targetColor = hexToRgb(selectedColor);
-            for (let i = 0; i < data.length; i += 4) {
-                if (isMatchingColor(data[i], data[i + 1], data[i + 2], targetColor)) {
-                    data[i + 3] = 0;
-                }
-            }
-            tempCtx.putImageData(imageData, 0, 0);
-
-            const link = document.createElement('a');
-            link.href = tempCanvas.toDataURL('image/png');
-            link.download = `${originalImageName}_FYNRESH.png`; // Append "_FYNRESH" to the original name
-            link.click();
+    const targetColor = hexToRgb(selectedColor);
+    for (let i = 0; i < data.length; i += 4) {
+        if (isMatchingColor(data[i], data[i + 1], data[i + 2], targetColor)) {
+            data[i + 3] = 0;
         }
+    }
+    tempCtx.putImageData(imageData, 0, 0);
+
+    const link = document.createElement('a');
+    link.href = tempCanvas.toDataURL('image/png');
+    link.download = `${originalImageName}_FYNRESH.png`; // Append "_FYNRESH" to the original name
+    link.click();
+}
 
         eyeDropperBtn.addEventListener('click', () => {
             if ('EyeDropper' in window) {
