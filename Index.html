@@ -93,235 +93,220 @@
 
     <script>
     const upload = document.getElementById('upload');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const eyeDropperBtn = document.getElementById('eyeDropperBtn');
-    const fallbackColorPicker = document.getElementById('fallbackColorPicker');
-    const hexInput = document.getElementById('hexInput');
-    const rgbInput = document.getElementById('rgbInput');
-    const selectedColorDiv = document.getElementById('selectedColor');
-    const imageDimensions = document.getElementById('imageDimensions');
-    const colorPaletteContainer = document.getElementById('colorPaletteContainer');
-    const meaningText = document.getElementById('meaning');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const eyeDropperBtn = document.getElementById('eyeDropperBtn');
+const fallbackColorPicker = document.getElementById('fallbackColorPicker');
+const hexInput = document.getElementById('hexInput');
+const rgbInput = document.getElementById('rgbInput');
+const selectedColorDiv = document.getElementById('selectedColor');
+const imageDimensions = document.getElementById('imageDimensions');
+const colorPaletteContainer = document.getElementById('colorPaletteContainer');
+const toleranceSlider = document.getElementById('toleranceSlider');
+const toleranceValue = document.getElementById('toleranceValue');
 
-    let img = new Image();
-    let selectedColor = '#ffffff';
-    let originalImgData;
-    let originalImageSrc;
-    let originalImageName = "image"; // Default name for the image
-    let colorCounts = {}; // Object to store frequency of each color
+let img = new Image();
+let selectedColor = '#ffffff';
+let originalImageData;
+let originalImageSrc;
+let originalImageName = "image"; 
 
-    upload.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            originalImageName = file.name.split('.')[0]; // Extract name without extension
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                img.src = e.target.result;
-                originalImageSrc = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-
-    img.onload = () => {
-        const width = img.width;
-        const height = img.height;
-        imageDimensions.textContent = `Dimensions: ${width}px x ${height}px`;
-
-        // Store original image data in full quality
-        originalImgData = getImageDataForOriginal(img);
-
-        const maxSize = 500;
-        let widthAdjusted = img.width;
-        let heightAdjusted = img.height;
-        if (widthAdjusted > maxSize || heightAdjusted > maxSize) {
-            const ratio = Math.min(maxSize / widthAdjusted, maxSize / heightAdjusted);
-            widthAdjusted = widthAdjusted * ratio;
-            heightAdjusted = heightAdjusted * ratio;
-        }
-
-        canvas.width = widthAdjusted;
-        canvas.height = heightAdjusted;
-        ctx.drawImage(img, 0, 0, widthAdjusted, heightAdjusted);
-
-        // Detect dominant colors
-        detectDominantColors();
-    };
-
-    function getImageDataForOriginal(image) {
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        tempCanvas.width = image.width;
-        tempCanvas.height = image.height;
-        tempCtx.drawImage(image, 0, 0);
-        return tempCtx.getImageData(0, 0, image.width, image.height);
-    }
-
-    function detectDominantColors() {
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-
-        // Reset color counts
-        colorCounts = {};
-
-        // Loop through each pixel and count color frequencies
-        for (let i = 0; i < data.length; i += 4) {
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
-            const rgbColor = rgbToHex(r, g, b);
-
-            if (colorCounts[rgbColor]) {
-                colorCounts[rgbColor]++;
-            } else {
-                colorCounts[rgbColor] = 1;
-            }
-        }
-
-        // Sort colors by frequency and take the top N most frequent colors
-        const sortedColors = Object.entries(colorCounts)
-            .sort((a, b) => b[1] - a[1]) // Sort by frequency in descending order
-            .slice(0, 10); // Limit to top 10 colors
-
-        // Create color swatches for the most frequent colors
-        displayColorSwatches(sortedColors);
-    }
-
-    function displayColorSwatches(sortedColors) {
-        colorPaletteContainer.innerHTML = '';  // Clear previous swatches
-
-        sortedColors.forEach(([color, frequency]) => {
-            const colorSwatch = document.createElement('div');
-            colorSwatch.classList.add('color-swatch');
-            colorSwatch.style.backgroundColor = color;
-            colorSwatch.addEventListener('click', () => {
-                selectedColor = color;
-                updateColorFields(selectedColor);
-            });
-            colorPaletteContainer.appendChild(colorSwatch);
-        });
-    }
-
-    // Convert RGB to Hex
-    function rgbToHex(r, g, b) {
-        return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
-    }
-
-    // Convert Hex to RGB
-    function hexToRgb(hex) {
-        let bigint = parseInt(hex.slice(1), 16);
-        return {
-            r: (bigint >> 16) & 255,
-            g: (bigint >> 8) & 255,
-            b: bigint & 255
+upload.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        originalImageName = file.name.split('.')[0]; 
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            img.src = e.target.result;
+            originalImageSrc = e.target.result;
         };
+        reader.readAsDataURL(file);
+    }
+});
+
+img.onload = () => {
+    drawOriginalImage();
+    detectDominantColors();
+};
+
+function drawOriginalImage() {
+    const maxSize = 500;
+    let widthAdjusted = img.width;
+    let heightAdjusted = img.height;
+
+    if (widthAdjusted > maxSize || heightAdjusted > maxSize) {
+        const ratio = Math.min(maxSize / widthAdjusted, maxSize / heightAdjusted);
+        widthAdjusted = widthAdjusted * ratio;
+        heightAdjusted = heightAdjusted * ratio;
     }
 
-    function updateColorFields(color) {
-        selectedColorDiv.style.backgroundColor = color; // Show the selected color
-        hexInput.value = color; // Update the hex input field
-        rgbInput.value = hexToRgbString(color); // Update the RGB input field
+    canvas.width = widthAdjusted;
+    canvas.height = heightAdjusted;
+    ctx.drawImage(img, 0, 0, widthAdjusted, heightAdjusted);
+
+    originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    imageDimensions.textContent = `Dimensions: ${img.width}px x ${img.height}px`;
+}
+
+function detectDominantColors() {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    let colorCounts = {};
+
+    for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const rgbColor = rgbToHex(r, g, b);
+
+        colorCounts[rgbColor] = (colorCounts[rgbColor] || 0) + 1;
     }
 
-    function hexToRgbString(hex) {
-        const rgb = hexToRgb(hex);
-        return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
-    }
+    const sortedColors = Object.entries(colorCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
 
-    // Remove color from image
-    function removeColor() {
-        const targetColor = hexToRgb(selectedColor);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-        const tolerance = parseInt(toleranceSlider.value, 10); // Get dynamic tolerance
+    displayColorSwatches(sortedColors);
+}
 
-        for (let i = 0; i < data.length; i += 4) {
-            if (isMatchingColor(data[i], data[i + 1], data[i + 2], targetColor, tolerance)) {
-                data[i + 3] = 0; // Set alpha to 0 (transparent)
-            }
-        }
-        ctx.putImageData(imageData, 0, 0);
-    }
+function displayColorSwatches(sortedColors) {
+    colorPaletteContainer.innerHTML = '';  
 
-    function isMatchingColor(r, g, b, targetColor, tolerance = 5) {
-        return (
-            Math.abs(r - targetColor.r) <= tolerance &&
-            Math.abs(g - targetColor.g) <= tolerance &&
-            Math.abs(b - targetColor.b) <= tolerance
-        );
-    }
-
-    function downloadImage() {
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        tempCanvas.width = img.width;
-        tempCanvas.height = img.height;
-        tempCtx.putImageData(originalImgData, 0, 0);
-        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-        const data = imageData.data;
-
-        const targetColor = hexToRgb(selectedColor);
-        const tolerance = parseInt(toleranceSlider.value, 10);
-        for (let i = 0; i < data.length; i += 4) {
-            if (isMatchingColor(data[i], data[i + 1], data[i + 2], targetColor, tolerance)) {
-                data[i + 3] = 0;
-            }
-        }
-        tempCtx.putImageData(imageData, 0, 0);
-
-        const link = document.createElement('a');
-        link.href = tempCanvas.toDataURL('image/png');
-        link.download = `${originalImageName}_FYNRESH.png`; // Append "_FYNRESH" to the original name
-        link.click();
-    }
-
-    eyeDropperBtn.addEventListener('click', () => {
-        if ('EyeDropper' in window) {
-            const eyeDropper = new EyeDropper();
-            eyeDropper.open().then(result => {
-                selectedColor = result.sRGBHex; // Set the selected color from eye dropper
-                updateColorFields(selectedColor);
-            }).catch(e => {
-                alert('Color picking failed: ' + e);
-            });
-        } else {
-            // Fall back to color picker input for unsupported browsers (mobile)
-            fallbackColorPicker.click();
-        }
+    sortedColors.forEach(([color]) => {
+        const colorSwatch = document.createElement('div');
+        colorSwatch.classList.add('color-swatch');
+        colorSwatch.style.backgroundColor = color;
+        colorSwatch.addEventListener('click', () => {
+            selectedColor = color;
+            updateColorFields(selectedColor);
+            restoreImage();  
+            removeColor();   
+        });
+        colorPaletteContainer.appendChild(colorSwatch);
     });
+}
 
-    fallbackColorPicker.addEventListener('input', () => {
-        selectedColor = fallbackColorPicker.value;
+function rgbToHex(r, g, b) {
+    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
+}
+
+function hexToRgb(hex) {
+    let bigint = parseInt(hex.slice(1), 16);
+    return {
+        r: (bigint >> 16) & 255,
+        g: (bigint >> 8) & 255,
+        b: bigint & 255
+    };
+}
+
+function updateColorFields(color) {
+    selectedColorDiv.style.backgroundColor = color;
+    hexInput.value = color;
+    rgbInput.value = hexToRgbString(color);
+}
+
+function hexToRgbString(hex) {
+    const rgb = hexToRgb(hex);
+    return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+}
+
+function restoreImage() {
+    ctx.putImageData(originalImageData, 0, 0);
+}
+
+function removeColor() {
+    restoreImage();  
+    const targetColor = hexToRgb(selectedColor);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    const tolerance = parseInt(toleranceSlider.value, 10);
+
+    for (let i = 0; i < data.length; i += 4) {
+        if (isMatchingColor(data[i], data[i + 1], data[i + 2], targetColor, tolerance)) {
+            data[i + 3] = 0; 
+        }
+    }
+    ctx.putImageData(imageData, 0, 0);
+}
+
+function isMatchingColor(r, g, b, targetColor, tolerance = 5) {
+    return (
+        Math.abs(r - targetColor.r) <= tolerance &&
+        Math.abs(g - targetColor.g) <= tolerance &&
+        Math.abs(b - targetColor.b) <= tolerance
+    );
+}
+
+function downloadImage() {
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCanvas.width = img.width;
+    tempCanvas.height = img.height;
+
+    tempCtx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
+    let imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+    let data = imageData.data;
+
+    const targetColor = hexToRgb(selectedColor);
+    const tolerance = parseInt(toleranceSlider.value, 10);
+    for (let i = 0; i < data.length; i += 4) {
+        if (isMatchingColor(data[i], data[i + 1], data[i + 2], targetColor, tolerance)) {
+            data[i + 3] = 0;
+        }
+    }
+    tempCtx.putImageData(imageData, 0, 0);
+
+    const link = document.createElement('a');
+    link.href = tempCanvas.toDataURL('image/png');
+    link.download = `${originalImageName}_FYNRESH.png`;
+    link.click();
+}
+
+eyeDropperBtn.addEventListener('click', () => {
+    if ('EyeDropper' in window) {
+        const eyeDropper = new EyeDropper();
+        eyeDropper.open().then(result => {
+            selectedColor = result.sRGBHex;
+            updateColorFields(selectedColor);
+            restoreImage();
+            removeColor();
+        }).catch(e => {
+            alert('Color picking failed: ' + e);
+        });
+    } else {
+        fallbackColorPicker.click();
+    }
+});
+
+fallbackColorPicker.addEventListener('input', () => {
+    selectedColor = fallbackColorPicker.value;
+    updateColorFields(selectedColor);
+    restoreImage();
+    removeColor();
+});
+
+hexInput.addEventListener('input', () => {
+    if (/^#[0-9A-Fa-f]{6}$/.test(hexInput.value.trim())) {
+        selectedColor = hexInput.value.trim();
         updateColorFields(selectedColor);
-    });
+        restoreImage();
+        removeColor();
+    }
+});
 
-    hexInput.addEventListener('input', () => {
-        const hexValue = hexInput.value.trim();
-        if (/^#[0-9A-Fa-f]{6}$/.test(hexValue)) {
-            selectedColor = hexValue;
-            updateColorFields(selectedColor);
-        }
-    });
+rgbInput.addEventListener('input', () => {
+    const match = rgbInput.value.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+    if (match) {
+        selectedColor = rgbToHex(...match.slice(1, 4).map(Number));
+        updateColorFields(selectedColor);
+        restoreImage();
+        removeColor();
+    }
+});
 
-    rgbInput.addEventListener('input', () => {
-        const rgbValue = rgbInput.value.trim();
-        const rgbMatch = rgbValue.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-        if (rgbMatch) {
-            const r = parseInt(rgbMatch[1], 10);
-            const g = parseInt(rgbMatch[2], 10);
-            const b = parseInt(rgbMatch[3], 10);
-            selectedColor = rgbToHex(r, g, b);
-            updateColorFields(selectedColor);
-        }
-    });
-
-    const toleranceSlider = document.getElementById('toleranceSlider');
-    const toleranceValue = document.getElementById('toleranceValue');
-
-    toleranceSlider.addEventListener('input', () => {
-        toleranceValue.textContent = toleranceSlider.value;
-    });
+toleranceSlider.addEventListener('input', () => {
+    toleranceValue.textContent = toleranceSlider.value;
+});
 </script>
 </body>
 </html>
