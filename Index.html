@@ -236,15 +236,14 @@
 }
 
 
-        function isMatchingColor(r, g, b, targetColor, tolerance = 30) {
+        function isMatchingColor(r, g, b, targetColor, tolerance = 5) { // Reduced from 30 to 5
     return (
         Math.abs(r - targetColor.r) <= tolerance &&
         Math.abs(g - targetColor.g) <= tolerance &&
         Math.abs(b - targetColor.b) <= tolerance
     );
 }
-
-
+        
         function downloadImage() {
     const tempCanvas = document.createElement('canvas');
     const tempCtx = tempCanvas.getContext('2d');
